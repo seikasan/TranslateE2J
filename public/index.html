@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>英語 → 日本語 翻訳</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>英語 → 日本語 翻訳</h1>
+    <div class="container">
+      <div class="textarea-container">
+        <label for="english-text">英語</label>
+        <textarea id="english-text" placeholder="ここに翻訳したい英語を入力してください..."></textarea>
+      </div>
+      <div class="button-container">
+        <button id="translate-button">翻訳</button>
+        <div id="loader" class="loader" style="display: none;"></div>
+      </div>
+      <div class="textarea-container">
+        <label for="japanese-result">日本語</label>
+        <textarea id="japanese-result" readonly placeholder="ここに翻訳結果が表示されます..."></textarea>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
