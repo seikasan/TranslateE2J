@@ -27,16 +27,30 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'サーバーエラーが発生しました。');
+        const errorData = await response.json().catch(() => null); // JSONパースに失敗する可能性も考慮
+        throw new Error(errorData?.error || `サーバーエラーが発生しました (${response.status})`);
       }
 
-      const data = await response.json();
-      japaneseResultTextarea.value = data.translation;
+      // ストリーミング処理
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      japaneseResultTextarea.value = ''; // 表示エリアをクリア
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break; // ストリーム終了
+        }
+        const chunk = decoder.decode(value, { stream: true });
+        japaneseResultTextarea.value += chunk;
+      }
 
     } catch (error) {
       console.error('翻訳リクエストエラー:', error);
-      japaneseResultTextarea.value = `エラー: ${error.message}`;
+      // エラー発生時に翻訳中表示が残らないように調整
+      if (japaneseResultTextarea.value === '翻訳中...' || japaneseResultTextarea.value === '') {
+          japaneseResultTextarea.value = `エラー: ${error.message}`;
+      }
     } finally {
       // 翻訳終了: UIを元に戻す
       translateButton.disabled = false;
@@ -44,14 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  const clearButton = document.getElementById('clear-button');
   const copyButton = document.getElementById('copy-button');
-
-  // クリア機能
-  clearButton.addEventListener('click', () => {
-    englishTextarea.value = '';
-    japaneseResultTextarea.value = '';
-  });
 
   // コピー機能
   copyButton.addEventListener('click', () => {

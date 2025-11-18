@@ -38,11 +38,20 @@ app.post('/translate', async (req, res) => {
 ${text}
 `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const translatedText = response.text();
+    const result = await model.generateContentStream(prompt);
 
-    res.json({ translation: translatedText });
+    // ストリーミングのためにレスポンスヘッダーを設定
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+
+    // ストリームからチャンクを読み取り、クライアントに送信
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      res.write(chunkText);
+    }
+
+    // ストリームの終了
+    res.end();
+
   } catch (error) {
     console.error('翻訳エラー:', error);
     res.status(500).json({ error: '翻訳中にエラーが発生しました。' });
