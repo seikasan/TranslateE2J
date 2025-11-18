@@ -104,3 +104,31 @@ textarea:focus {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.label-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.small-button {
+  background-color: #4a4a4a;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.small-button:hover {
+  background-color: #5a5a5a;
+}
+
+.small-button.copied {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
