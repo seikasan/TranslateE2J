@@ -11,20 +11,22 @@
   <main>
     <h1>英語 → 日本語 翻訳</h1>
     <div class="container">
-      <div class="textarea-container">
-        <label for="english-text">英語</label>
-        <textarea id="english-text" placeholder="ここに翻訳したい英語を入力してください..."></textarea>
-      </div>
-      <div class="button-container">
-        <button id="translate-button">翻訳</button>
-        <div id="loader" class="loader" style="display: none;"></div>
-      </div>
-      <div class="textarea-container">
-        <div class="label-container">
-          <label for="japanese-result">日本語</label>
-          <button id="copy-button" class="small-button">コピー</button>
+      <div class="translation-container">
+        <div class="textarea-container">
+          <label for="english-text">英語</label>
+          <textarea id="english-text" placeholder="ここに翻訳したい英語を入力してください..."></textarea>
         </div>
-        <textarea id="japanese-result" readonly placeholder="ここに翻訳結果が表示されます..."></textarea>
+        <div class="button-container">
+          <button id="translate-button">→</button>
+          <div id="loader" class="loader" style="display: none;"></div>
+        </div>
+        <div class="textarea-container">
+          <div class="label-container">
+            <label for="japanese-result">日本語</label>
+            <button id="copy-button" class="small-button">コピー</button>
+          </div>
+          <textarea id="japanese-result" readonly placeholder="ここに翻訳結果が表示されます..."></textarea>
+        </div>
       </div>
     </div>
   </main>
