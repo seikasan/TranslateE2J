@@ -1,7 +1,9 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { exec } = require('child_process'); // 追加
+const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 // 環境変数の読み込み
 dotenv.config();
@@ -17,38 +19,29 @@ app.use(express.json());
 // Gemini APIの初期化
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// プロンプトテンプレートの読み込み
+const promptTemplatePath = path.join(__dirname, 'prompt.md');
+const promptTemplate = fs.readFileSync(promptTemplatePath, 'utf-8');
+
 // 翻訳APIエンドポイント
 app.post('/translate', async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, model: modelName } = req.body;
     if (!text) {
       return res.status(400).json({ error: '翻訳するテキストがありません。' });
     }
 
+    // デフォルトは gemini-2.5-flash-lite
+    const selectedModel = modelName || 'gemini-2.5-flash-lite';
+
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: selectedModel,
       generationConfig: {
         temperature: 0,
       },
     });
-    const prompt = `あなたは、多様な分野の文章を英語から日本語へ翻訳する、経験豊富なプロの翻訳家です。
-以下の指示と入力文に基づき、最高品質の翻訳を生成してください。
 
-# 翻訳の原則
-・【最重要】文脈を完全に理解し、単語の逐語訳ではなく、文章全体の意味が自然に伝わるように翻訳してください。
-・誤訳や訳抜けがないよう、原文の意図を正確かつ忠実に反映してください。
-・日本の読者が読んだ際に、自然で流暢に感じられる日本語を使用してください。文体は丁寧な「です・ます調」で統一してください。
-・専門用語や固有名詞は、文脈に最も適した日本語訳を用いるか、一般的に使われるカタカナ表記にしてください。
-・原文のフォーマット（改行、箇条書き、マークダウンなど）は、可能な限り維持してください。
-・原文が持つニュアンスやトーン（フォーマルさ、感情など）を損なわないようにしてください。
-
-# 禁止事項
-・翻訳文以外のテキスト（例：「翻訳結果は以下の通りです。」、「承知しました。」などの前置きや後書き）は一切含めないでください。
-・個人的な意見や解釈、原文にない情報を追加しないでください。
-
-# 入力文
-${text}
-`;
+    const prompt = promptTemplate.replace('{{TEXT}}', text);
 
     const result = await model.generateContentStream(prompt);
 

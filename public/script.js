@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const englishTextarea = document.getElementById('english-text');
   const japaneseResultTextarea = document.getElementById('japanese-result');
+  const japaneseResultPreview = document.getElementById('japanese-result-preview');
   const translateButton = document.getElementById('translate-button');
   const loader = document.getElementById('loader');
 
@@ -25,11 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const syncScroll = (source, target) => {
     if (isSyncingScroll) return;
     isSyncingScroll = true;
-    
+
     const sourceScrollTop = source.scrollTop;
     const sourceScrollHeight = source.scrollHeight;
     const sourceClientHeight = source.clientHeight;
-    
+
     const targetScrollHeight = target.scrollHeight;
     const targetClientHeight = target.clientHeight;
 
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const scrollPercentage = sourceScrollTop / (sourceScrollHeight - sourceClientHeight);
       target.scrollTop = scrollPercentage * (targetScrollHeight - targetClientHeight);
     }
-    
+
     setTimeout(() => { isSyncingScroll = false; }, 100); // 短い遅延で再同期を防ぐ
   };
 
@@ -49,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Translate Logic ---
   translateButton.addEventListener('click', async () => {
     const englishText = englishTextarea.value.trim();
+    const modelSelect = document.getElementById('model-select');
+    const selectedModel = modelSelect.value;
 
     if (!englishText) {
       japaneseResultTextarea.value = '翻訳するテキストを入力してください。';
@@ -65,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch('/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: englishText }),
+        body: JSON.stringify({ text: englishText, model: selectedModel }),
       });
 
       if (!response.ok) {
@@ -78,20 +81,32 @@ document.addEventListener('DOMContentLoaded', () => {
       japaneseResultTextarea.value = '';
       adjustTextareaHeight(japaneseResultTextarea); // 空にした後も高さをリセット
 
+      let fullJapaneseText = ''; // 履歴用に全テキストを保持
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         const chunk = decoder.decode(value, { stream: true });
         japaneseResultTextarea.value += chunk;
+        fullJapaneseText += chunk;
+
+        if (isMarkdownMode) {
+          japaneseResultPreview.innerHTML = marked.parse(japaneseResultTextarea.value);
+        }
+
         adjustTextareaHeight(japaneseResultTextarea); // チャンクを受け取るたびに高さを調整
       }
+
+      // 翻訳完了後に履歴に保存
+      saveHistory(englishText, fullJapaneseText);
+
 
     } catch (error) {
       console.error('翻訳リクエストエラー:', error);
       if (japaneseResultTextarea.value === '翻訳中...' || japaneseResultTextarea.value === '') {
-          japaneseResultTextarea.value = `エラー: ${error.message}`;
-          adjustTextareaHeight(japaneseResultTextarea);
+        japaneseResultTextarea.value = `エラー: ${error.message}`;
+        adjustTextareaHeight(japaneseResultTextarea);
       }
     } finally {
       translateButton.disabled = false;
@@ -132,4 +147,133 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  // --- Markdown Logic ---
+  const markdownToggle = document.getElementById('markdown-toggle');
+  let isMarkdownMode = false;
+
+  markdownToggle.addEventListener('click', () => {
+    isMarkdownMode = !isMarkdownMode;
+
+    if (isMarkdownMode) {
+      markdownToggle.classList.add('active');
+      japaneseResultTextarea.style.display = 'none';
+      japaneseResultPreview.style.display = 'block';
+
+      // Render current content
+      const currentText = japaneseResultTextarea.value;
+      if (currentText) {
+        japaneseResultPreview.innerHTML = marked.parse(currentText);
+      }
+    } else {
+      markdownToggle.classList.remove('active');
+      japaneseResultTextarea.style.display = 'block';
+      japaneseResultPreview.style.display = 'none';
+      adjustTextareaHeight(japaneseResultTextarea);
+    }
+  });
+
+  // --- History Logic ---
+  const historySidebar = document.getElementById('history-sidebar');
+  const historyList = document.getElementById('history-list');
+  const historyToggle = document.getElementById('history-toggle');
+  const closeHistory = document.getElementById('close-history');
+  const clearHistoryBtn = document.getElementById('clear-history');
+  const overlay = document.getElementById('overlay');
+
+  const toggleHistory = () => {
+    const isOpen = historySidebar.classList.contains('open');
+    if (isOpen) {
+      historySidebar.classList.remove('open');
+      overlay.classList.remove('show');
+    } else {
+      historySidebar.classList.add('open');
+      overlay.classList.add('show');
+      renderHistory();
+    }
+  };
+
+  historyToggle.addEventListener('click', toggleHistory);
+  closeHistory.addEventListener('click', toggleHistory);
+  overlay.addEventListener('click', toggleHistory);
+
+  const saveHistory = (source, result) => {
+    if (!source || !result) return;
+
+    const historyItem = {
+      id: Date.now(),
+      source: source,
+      result: result,
+      date: new Date().toLocaleString('ja-JP')
+    };
+
+    let history = JSON.parse(localStorage.getItem('translationHistory') || '[]');
+    history.unshift(historyItem); // 新しいものを先頭に
+
+    // 最大50件まで保持
+    if (history.length > 50) {
+      history = history.slice(0, 50);
+    }
+
+    localStorage.setItem('translationHistory', JSON.stringify(history));
+    renderHistory(); // サイドバーが開いている場合に更新
+  };
+
+  const renderHistory = () => {
+    const history = JSON.parse(localStorage.getItem('translationHistory') || '[]');
+    historyList.innerHTML = '';
+
+    if (history.length === 0) {
+      historyList.innerHTML = '<div style="padding:1rem; color:#888; text-align:center;">履歴はありません</div>';
+      return;
+    }
+
+    history.forEach(item => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'history-item';
+      itemDiv.innerHTML = `
+        <div class="history-date">${item.date}</div>
+        <div class="history-source">${escapeHtml(item.source)}</div>
+        <div class="history-result">${escapeHtml(item.result)}</div>
+      `;
+
+      itemDiv.addEventListener('click', () => {
+        englishTextarea.value = item.source;
+        japaneseResultTextarea.value = item.result;
+
+        if (isMarkdownMode) {
+          japaneseResultPreview.innerHTML = marked.parse(item.result);
+        }
+
+        adjustTextareaHeight(englishTextarea);
+        adjustTextareaHeight(japaneseResultTextarea);
+        toggleHistory(); // 選択したら閉じる
+      });
+
+      historyList.appendChild(itemDiv);
+    });
+  };
+
+  clearHistoryBtn.addEventListener('click', () => {
+    if (confirm('履歴をすべて削除しますか？')) {
+      localStorage.removeItem('translationHistory');
+      renderHistory();
+    }
+  });
+
+  // HTMLエスケープ用関数
+  const escapeHtml = (str) => {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, (match) => {
+      const escape = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return escape[match];
+    });
+  };
+
 });
