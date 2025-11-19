@@ -234,14 +234,26 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    history.forEach(item => {
+    history.forEach((item, index) => {
       const itemDiv = document.createElement('div');
       itemDiv.className = 'history-item';
       itemDiv.innerHTML = `
         <div class="history-date">${item.date}</div>
         <div class="history-source">${escapeHtml(item.source)}</div>
         <div class="history-result">${escapeHtml(item.result)}</div>
+        <button class="history-delete-btn" title="この履歴を削除">×</button>
       `;
+
+      // Delete button click handler
+      const deleteBtn = itemDiv.querySelector('.history-delete-btn');
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent item click
+        if (confirm('この履歴を削除しますか？')) {
+          history.splice(index, 1); // Remove item
+          localStorage.setItem('translationHistory', JSON.stringify(history));
+          renderHistory(); // Re-render
+        }
+      });
 
       itemDiv.addEventListener('click', () => {
         englishTextarea.value = item.source;
