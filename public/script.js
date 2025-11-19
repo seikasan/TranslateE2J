@@ -156,11 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Markdown Logic ---
   const markdownToggle = document.getElementById('markdown-toggle');
-  let isMarkdownMode = false;
+  let isMarkdownMode = true; // Default to Markdown
 
-  markdownToggle.addEventListener('click', () => {
-    isMarkdownMode = !isMarkdownMode;
-
+  const updateMarkdownUI = () => {
     if (isMarkdownMode) {
       markdownToggle.classList.add('active');
       japaneseResultTextarea.style.display = 'none';
@@ -177,6 +175,14 @@ document.addEventListener('DOMContentLoaded', () => {
       japaneseResultPreview.style.display = 'none';
       adjustTextareaHeight(japaneseResultTextarea);
     }
+  };
+
+  // Initial Apply
+  updateMarkdownUI();
+
+  markdownToggle.addEventListener('click', () => {
+    isMarkdownMode = !isMarkdownMode;
+    updateMarkdownUI();
   });
 
   // --- History Logic ---
