@@ -307,6 +307,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Focus back to input
     englishTextarea.focus();
+
+    // Also clear storage
+    localStorage.removeItem('draftEnglish');
+  });
+
+  // --- Auto-save Logic ---
+  const savedEnglishText = localStorage.getItem('draftEnglish');
+  if (savedEnglishText) {
+    englishTextarea.value = savedEnglishText;
+    adjustTextareaHeight(englishTextarea);
+  }
+
+  englishTextarea.addEventListener('input', () => {
+    localStorage.setItem('draftEnglish', englishTextarea.value);
+  });
+
+  // --- Font Size Logic ---
+  const fontSizeUpBtn = document.getElementById('font-size-up');
+  const fontSizeDownBtn = document.getElementById('font-size-down');
+  const fontSizeResetBtn = document.getElementById('font-size-reset');
+
+  let currentFontSize = parseInt(localStorage.getItem('preferredFontSize') || '16', 10);
+
+  const applyFontSize = (size) => {
+    const elements = [englishTextarea, japaneseResultTextarea, japaneseResultPreview];
+    elements.forEach(el => {
+      el.style.fontSize = `${size}px`;
+    });
+    localStorage.setItem('preferredFontSize', size);
+  };
+
+  // Initial apply
+  applyFontSize(currentFontSize);
+
+  if (fontSizeUpBtn && fontSizeDownBtn && fontSizeResetBtn) {
+    fontSizeUpBtn.addEventListener('click', () => {
+      currentFontSize = Math.min(currentFontSize + 2, 32); // Max 32px
+      applyFontSize(currentFontSize);
+      adjustTextareaHeight(englishTextarea);
+      adjustTextareaHeight(japaneseResultTextarea);
+    });
+
+    fontSizeDownBtn.addEventListener('click', () => {
+      currentFontSize = Math.max(currentFontSize - 2, 12); // Min 12px
+      applyFontSize(currentFontSize);
+      adjustTextareaHeight(englishTextarea);
+      adjustTextareaHeight(japaneseResultTextarea);
+    });
+
+    fontSizeResetBtn.addEventListener('click', () => {
+      currentFontSize = 16;
+      applyFontSize(currentFontSize);
+      adjustTextareaHeight(englishTextarea);
+      adjustTextareaHeight(japaneseResultTextarea);
+    });
+  }
+
+
+  // --- Global Shortcuts (Esc) ---
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      // 1. Close History if open
+      if (historySidebar.classList.contains('open')) {
+        toggleHistory();
+        return;
+      }
+
+      // 2. Clear inputs if not empty
+      if (englishTextarea.value || japaneseResultTextarea.value) {
+        clearButton.click();
+      }
+    }
   });
 
 });
