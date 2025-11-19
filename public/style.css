@@ -156,23 +156,14 @@ textarea {
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-}
-
-.small-button:hover {
-  background-color: #5a5a5a;
-}
-
-.small-button.copied {
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 /* --- History Sidebar --- */
 .history-toggle {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  left: 20px;
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -197,14 +188,14 @@ textarea {
 .history-sidebar {
   position: fixed;
   top: 0;
-  right: -320px;
+  left: -320px;
   /* Hidden by default */
   width: 300px;
   height: 100%;
   background-color: var(--secondary-color);
-  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
   z-index: 1001;
-  transition: right 0.3s ease-in-out;
+  transition: left 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
   padding: 1rem;
@@ -212,7 +203,7 @@ textarea {
 }
 
 .history-sidebar.open {
-  right: 0;
+  left: 0;
 }
 
 .history-header {
