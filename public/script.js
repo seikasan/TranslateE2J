@@ -276,4 +276,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  // --- Clear Button ---
+  const clearButton = document.getElementById('clear-button');
+  clearButton.addEventListener('click', () => {
+    englishTextarea.value = '';
+    japaneseResultTextarea.value = '';
+    japaneseResultPreview.innerHTML = '';
+
+    // Reset heights
+    adjustTextareaHeight(englishTextarea);
+    adjustTextareaHeight(japaneseResultTextarea);
+
+    // Focus back to input
+    englishTextarea.focus();
+  });
+
 });
