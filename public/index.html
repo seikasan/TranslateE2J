@@ -18,7 +18,7 @@
             <label for="english-text">英語</label>
             <button id="clear-button" class="small-button danger" title="入力をクリア">Clear</button>
           </div>
-          <textarea id="english-text" placeholder="ここに翻訳したい英語を入力してください..."></textarea>
+          <textarea id="english-text" placeholder="ここに翻訳したい英語を入力してください (Ctrl + Enter で翻訳)"></textarea>
         </div>
         <div class="button-container">
           <div class="model-selector-container">
@@ -59,6 +59,7 @@
     </div>
   </div>
   <button id="history-toggle" class="history-toggle" title="履歴を表示">🕒</button>
+  <div id="toast" class="toast"></div>
   <div id="overlay" class="overlay"></div>
 </body>
 </html>

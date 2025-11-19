@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     translateButton.disabled = true;
     loader.style.display = 'block';
+    japaneseResultTextarea.classList.add('skeleton'); // Add skeleton class
     japaneseResultTextarea.value = '翻訳中...';
     adjustTextareaHeight(japaneseResultTextarea);
 
@@ -78,6 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+
+      // Remove skeleton before streaming starts
+      japaneseResultTextarea.classList.remove('skeleton');
       japaneseResultTextarea.value = '';
       adjustTextareaHeight(japaneseResultTextarea); // 空にした後も高さをリセット
 
@@ -104,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (error) {
       console.error('翻訳リクエストエラー:', error);
+      japaneseResultTextarea.classList.remove('skeleton'); // Ensure skeleton is removed on error
       if (japaneseResultTextarea.value === '翻訳中...' || japaneseResultTextarea.value === '') {
         japaneseResultTextarea.value = `エラー: ${error.message}`;
         adjustTextareaHeight(japaneseResultTextarea);
@@ -111,8 +116,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       translateButton.disabled = false;
       loader.style.display = 'none';
+      japaneseResultTextarea.classList.remove('skeleton'); // Ensure skeleton is removed in finally
     }
   });
+
+  // --- Toast Logic ---
+  const showToast = (message) => {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000);
+  };
 
   // --- Copy Logic ---
   const copyButton = document.getElementById('copy-button');
@@ -120,20 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const textToCopy = japaneseResultTextarea.value;
     if (textToCopy && japaneseResultTextarea.placeholder !== textToCopy && !textToCopy.startsWith('エラー:') && textToCopy !== '翻訳するテキストを入力してください。' && textToCopy !== '翻訳中...') {
       navigator.clipboard.writeText(textToCopy).then(() => {
-        const originalText = copyButton.textContent;
-        copyButton.textContent = 'コピー完了';
-        copyButton.classList.add('copied');
-        setTimeout(() => {
-          copyButton.textContent = originalText;
-          copyButton.classList.remove('copied');
-        }, 2000);
+        showToast('コピーしました');
       }).catch(err => {
         console.error('コピーに失敗しました', err);
-        const originalText = copyButton.textContent;
-        copyButton.textContent = '失敗';
-        setTimeout(() => {
-          copyButton.textContent = originalText;
-        }, 2000);
+        showToast('コピーに失敗しました');
       });
     }
   });
